@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forest Story Interactive</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+  <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/addons/p5.sound.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 40px; /* 页面四周留白 */
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background-color: #17563f; /* 深绿色背景 */
+      color: #fff;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+      padding: 40px 20px;
+      text-align: center;
+      box-sizing: border-box; /* 包含padding在宽度内 */
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 600;
+      color: #ff77a9; /* 粉色标题 */
+      margin-bottom: 40px;
+    }
+
+    #sketch-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 40px;
+    }
+
+    p {
+      text-align: left;
+      line-height: 1.6;
+      font-size: 1rem;
+      margin-bottom: 20px;
+    }
+
+    .highlight {
+      color: #ff77a9;
+      font-weight: 600;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 50px;
+      font-size: 0.85rem;
+      color: #ccc;
+    }
+
+    /* 可选：让内容在屏幕较小也居中显示 */
+    @media (max-width: 820px) {
+      body {
+        padding: 20px;
+      }
+      .container {
+        padding: 30px 15px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Forest Story</h1>
+
+    <!-- p5.js 画布会显示在这里 -->
+    <div id="sketch-container"></div>
+
+    <p>
+      Forest Story is an interactive experience controlled by hand gestures using
+      <span class="highlight">ml5.js handPose</span>. The camera tracks your hands and turns them into characters inside the scene.
+    </p>
+
+    <p>
+      The story takes place in a mysterious forest. One hand controls a girl exploring the space, while the other controls a monster following her. When the second hand opens, a tool appears, allowing the girl to defend herself or fight back.
+      Press the space to throw bombs from the girl. Holding the spacebar allows continuous throws, giving the user direct control over the story.
+    </p>
+
+    <p>
+      Users actively perform the story rather than just watching it. Movements and gestures directly shape what happens in the scene, making the narrative interactive.
+    </p>
+  </div>
+
+  <script src="sketch.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D 粒子建筑 - 蓝橙混合版</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; }
+        canvas { display: block; }
+        #hint {
+            position: absolute; bottom: 30px; width: 4100%;
+            text-align: center; color: #88eeff;
+            font-family: sans-serif; letter-spacing: 1px;
+            text-shadow: 0 0 8px rgba(0,255,255,0.5);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="hint">按住 [ 空格键 ] 触发粒子湮灭 | 释放还原</div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        let scene, camera, renderer, controls, particleSystem;
+        let originalPositions, velocities;
+        let isSpacePressed = false;
+
+        init();
+        animate();
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
+            camera.position.set(0, 20, 40); // 调远相机以适应大尺寸建筑
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.body.appendChild(renderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+
+            const loader = new GLTFLoader();
+            loader.load('building1.glb', (gltf) => {
+                let mesh;
+                gltf.scene.traverse(child => { if (child.isMesh) mesh = child; });
+
+                if (mesh) {
+                    setupParticles(mesh.geometry);
+                }
+            });
+
+            window.addEventListener('keydown', (e) => { if (e.code === 'Space') isSpacePressed = true; });
+            window.addEventListener('keyup', (e) => { if (e.code === 'Space') isSpacePressed = false; });
+            window.addEventListener('resize', onResize);
+        }
+
+        function setupParticles(geometry) {
+            geometry.center();
+
+            const count = geometry.attributes.position.count;
+            const positions = geometry.attributes.position.array;
+            originalPositions = new Float32Array(positions);
+            
+            // 1. 设置颜色属性
+            const colors = new Float32Array(count * 3);
+            const colorA = new THREE.Color(0x88ccff); // 淡蓝色
+            const colorB = new THREE.Color(0xffa500); // 橙色
+            const tempColor = new THREE.Color();
+
+            
+            velocities = new Float32Array(count * 3);
+
+            for (let i = 0; i < count; i++) {
+                const i3 = i * 3;
+                
+                
+                const ratio = Math.random();
+                tempColor.copy(colorA).lerp(colorB, ratio);
+                colors[i3] = tempColor.r;
+                colors[i3+1] = tempColor.g;
+                colors[i3+2] = tempColor.b;
+
+                // 爆炸速度
+                velocities[i3]   = (Math.random() - 0.5) * 1.2;
+                velocities[i3+1] = (Math.random() - 0.5) * 1.2;
+                velocities[i3+2] = (Math.random() - 0.5) * 1.2;
+            }
+
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const pMaterial = new THREE.PointsMaterial({
+                size: 0.06,
+                vertexColors: true, // 启用顶点颜色
+                transparent: true,
+                opacity: 0.9,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            particleSystem = new THREE.Points(geometry, pMaterial);
+            
+            // --- 调整建筑尺寸 ---
+            // 这里你可以修改数值，2 表示放大两倍，5 表示放大五倍，依此类推
+            particleSystem.scale.set(9, 9, 9); 
+            
+            scene.add(particleSystem);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (particleSystem) {
+                const positions = particleSystem.geometry.attributes.position.array;
+                
+                for (let i = 0; i < positions.length; i += 3) {
+                    if (isSpacePressed) {
+                        // 爆炸：扩散 + 随机位移
+                        positions[i]   += velocities[i] + (Math.random() - 0.5) * 0.1;
+                        positions[i+1] += velocities[i+1] + (Math.random() - 0.5) * 0.1;
+                        positions[i+2] += velocities[i+2] + (Math.random() - 0.5) * 0.1;
+                    } else {
+                        // 还原：插值回到原始位置
+                        positions[i]   += (originalPositions[i] - positions[i]) * 0.08;
+                        positions[i+1] += (originalPositions[i+1] - positions[i+1]) * 0.08;
+                        positions[i+2] += (originalPositions[i+2] - positions[i+2]) * 0.08;
+                    }
+                }
+                
+                if (!isSpacePressed) {
+                    particleSystem.rotation.y += 0.001; // 闲置时缓慢旋转，更有体积感
+                }
+
+                particleSystem.geometry.attributes.position.needsUpdate = true;
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function onResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+    </script>
+</body>
+</html>
