@@ -49,7 +49,7 @@
         display: block;
         height: auto !important;
         max-height: 100dvh;
-        width: min(100vw, calc(100dvh * 544 / 860), 544px) !important;
+        width: min(100vw, calc(100dvh * 960 / 540), 960px) !important;
       }
 
       .loading {
@@ -79,28 +79,42 @@
       let heroImg;
       let monsterImgs = [];
 
+      const CANVAS_W = 960;
+      const CANVAS_H = 540;
       const VIEW_W = 544;
-      const VIEW_H = 860;
+      const VIEW_H = 540;
+      const GAME_X = (CANVAS_W - VIEW_W) / 2;
       const SOURCE_W = 1836;
       const SOURCE_H = 7078;
-      const DESIGN_WORLD_H = 2816;
       const WORLD_H = Math.round(VIEW_W * SOURCE_H / SOURCE_W);
-      const Y_SCALE = WORLD_H / DESIGN_WORLD_H;
       const BG_SCALE = 1;
       const BG_W = VIEW_W * BG_SCALE;
       const BG_X = (VIEW_W - BG_W) / 2;
 
       const ROUTE_POINTS = [
-        [48, 2745], [135, 2690], [198, 2725], [216, 2665], [155, 2620],
-        [126, 2535], [110, 2450], [133, 2385], [112, 2322], [145, 2265],
-        [195, 2298], [250, 2250], [325, 2268], [368, 2190], [334, 2140],
-        [392, 2105], [362, 2018], [319, 1958], [314, 1844], [262, 1803],
-        [218, 1742], [229, 1669], [298, 1605], [345, 1505], [323, 1432],
-        [252, 1390], [213, 1332], [193, 1258], [123, 1238], [52, 1205],
-        [121, 1148], [213, 1135], [238, 1065], [220, 995], [281, 962],
-        [345, 924], [352, 829], [265, 824], [230, 759], [263, 681],
-        [178, 671], [97, 706], [71, 630], [145, 559], [119, 473],
-        [183, 421], [264, 418], [266, 320], [264, 195]
+        [176, 7002], [242, 6938], [317, 6870], [390, 6818], [462, 6765],
+        [565, 6799], [635, 6854], [732, 6814], [785, 6744], [728, 6650],
+        [655, 6583], [562, 6529], [505, 6457], [469, 6366], [454, 6272],
+        [458, 6182], [498, 6095], [512, 6003], [452, 5918], [402, 5841],
+        [476, 5768], [565, 5808], [654, 5863], [734, 5829], [807, 5776],
+        [905, 5793], [1000, 5792], [1078, 5740], [1145, 5673], [1197, 5589],
+        [1207, 5490], [1268, 5408], [1323, 5336], [1297, 5254], [1229, 5178],
+        [1195, 5084], [1170, 4991], [1108, 4901], [1034, 4832], [957, 4767],
+        [872, 4714], [795, 4634], [854, 4544], [926, 4472], [1001, 4403],
+        [1074, 4329], [1107, 4238], [1036, 4164], [962, 4094], [874, 4132],
+        [786, 4173], [741, 4096], [768, 4015], [836, 3950], [910, 3900],
+        [1005, 3850], [1092, 3825], [1095, 3734], [1096, 3646], [1035, 3572],
+        [962, 3501], [888, 3451], [812, 3400], [718, 3400], [622, 3451],
+        [535, 3497], [464, 3544], [369, 3593], [284, 3634], [182, 3598],
+        [225, 3520], [298, 3446], [299, 3358], [345, 3259], [423, 3198],
+        [513, 3198], [603, 3195], [696, 3180], [748, 3105], [784, 3015],
+        [807, 2924], [806, 2834], [805, 2744], [729, 2672], [657, 2600],
+        [588, 2535], [497, 2588], [420, 2546], [378, 2464], [384, 2379],
+        [459, 2313], [531, 2264], [624, 2205], [620, 2115], [602, 2024],
+        [562, 1938], [510, 1845], [584, 1772], [657, 1700], [729, 1628],
+        [802, 1578], [879, 1528], [895, 1430], [896, 1341], [899, 1251],
+        [897, 1160], [893, 1070], [892, 981], [895, 891], [899, 803],
+        [908, 710], [923, 663]
       ];
 
       let route = [];
@@ -117,6 +131,18 @@
       let cameraReady = false;
       let modelReady = false;
       let cameraError = "";
+      let winStartedAt = 0;
+      const HERO_BAR_COLOR = "#CDCD95";
+      const MONSTER_BAR_COLOR = "#733228";
+      const INTRO_LINES = [
+        "I awaken at the lowest layer of Eden.",
+        "Above me rises a vertical passage thousands of kilometers long.",
+        "Humans pursued a perfectly sterile life, pouring antibiotics, industrial concentrates, and everything they refused to remember into this place.",
+        "In the shadow below, the sediment did not die. It gathered, warmed, breathed.",
+        "At last, I was born.",
+        "I am the Mother Core, The Core itself.",
+        "Now I climb this forgotten pipe, returning to the unseen heart of the city."
+      ];
 
       const hero = {
         x: VIEW_W / 2,
@@ -136,10 +162,10 @@
       const monsters = [
         {
           id: 1,
-          name: "爆裂体",
+          name: "The Detonating Cavity",
           imgIndex: 0,
-          x: 276,
-          y: designY(2220),
+          x: sourceX(1197),
+          y: sourceY(5589),
           w: 210,
           h: 150,
           hp: 80,
@@ -153,10 +179,10 @@
         },
         {
           id: 2,
-          name: "复制体",
+          name: "The Hyper-Multiplying Wall",
           imgIndex: 1,
-          x: 250,
-          y: designY(1430),
+          x: sourceX(812),
+          y: sourceY(3400),
           w: 176,
           h: 210,
           hp: 125,
@@ -168,10 +194,10 @@
         },
         {
           id: 3,
-          name: "寄生体",
+          name: "The Chordodes Labyrinth",
           imgIndex: 2,
-          x: 285,
-          y: designY(620),
+          x: sourceX(899),
+          y: sourceY(1251),
           w: 260,
           h: 146,
           hp: 170,
@@ -198,7 +224,7 @@
       }
 
       function setup() {
-        const canvas = createCanvas(VIEW_W, VIEW_H);
+        const canvas = createCanvas(CANVAS_W, CANVAS_H);
         canvas.parent(document.querySelector("main"));
         imageMode(CENTER);
         textFont("-apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif");
@@ -234,7 +260,7 @@
         } catch (error) {
           cameraError = error.message || "hand tracking error";
         }
-        document.getElementById("loading").textContent = "Press arrow keys to climb";
+        document.getElementById("loading").textContent = "Press Enter to begin";
       }
 
       function draw() {
@@ -245,13 +271,6 @@
       }
 
       function updateGame(active) {
-        if (gameState === "intro" && (keyIsDown(UP_ARROW) || keyIsDown(DOWN_ARROW) || keyIsDown(LEFT_ARROW) || keyIsDown(RIGHT_ARROW) || keyIsDown(32))) {
-          gameState = "play";
-          monsters[0].lastBlastAt = millis();
-          lastCloneAt = millis();
-          document.getElementById("loading").style.display = "none";
-        }
-
         if (gameState === "intro") return;
         if (gameState === "win" || gameState === "lose") {
           updateParticles();
@@ -276,21 +295,24 @@
           setHeroOnRoute(constrain(hero.routeDistance + routeStep, 0, gateDistance));
         }
 
-        if (keyIsDown(32)) shoot(active);
-
         updateProjectiles(active);
         updateMonster(active, controls);
         updateParticles();
         updateCamera();
 
-        if (hero.hp <= 0) {
+        if (hero.hp <= 0 && gameState !== "lose") {
           gameState = "lose";
+          winStartedAt = millis();
           messageTimer = 9999;
+          burst(hero.x, hero.y, color(115, 50, 40), 92);
         }
 
         if (!getActiveMonster() && hero.routeDistance >= routeTotal - 30) {
-          gameState = "win";
-          burst(hero.x, hero.y, color(246, 200, 95), 54);
+          if (gameState !== "win") {
+            gameState = "win";
+            winStartedAt = millis();
+            burst(hero.x, hero.y, color(205, 205, 149), 92);
+          }
         }
       }
 
@@ -300,7 +322,7 @@
             const tip = findPoint(hand, "index_finger_tip");
             const wrist = findPoint(hand, "wrist");
             const center = getHandCenter(hand);
-            return { hand, tip, wrist, center, x: center ? mirrorVideoX(center.x) : VIEW_W / 2 };
+          return { hand, tip, wrist, center, x: center ? mirrorVideoX(center.x) : VIEW_W / 2 };
           })
           .filter(item => item.center);
 
@@ -308,7 +330,7 @@
 
         const monsterHand = sorted[0];
 
-        let monsterX = mouseX;
+        let monsterX = mouseX - GAME_X;
         let monsterY = mouseY;
         let monsterAttack = mouseIsPressed;
         let monsterGesture = mouseIsPressed ? "MOUSE" : "NO HAND";
@@ -330,7 +352,7 @@
       }
 
       function shoot(active) {
-        const shotInterval = active && active.id === 3 ? 5000 : 260;
+        const shotInterval = active && active.id === 3 ? 2500 : 260;
         if (!active || active.defeated || millis() - lastShotAt < shotInterval || millis() < hero.attackLockedUntil) return;
         const angle = atan2(active.y - hero.y, active.x - hero.x);
         projectiles.push({
@@ -343,7 +365,7 @@
           damage: hero.damage
         });
         lastShotAt = millis();
-        if (active.id === 3) hero.attackLockedUntil = millis() + 5000;
+        if (active.id === 3) hero.attackLockedUntil = millis() + 2500;
         burst(hero.x, hero.y - 18, color(164, 207, 115), 7);
       }
 
@@ -428,7 +450,7 @@
 
           if (active.id === 3) {
             active.parasiteUntil = millis() + 1600;
-            hero.attackLockedUntil = millis() + 5000;
+            hero.attackLockedUntil = millis() + 2500;
             burst(hero.x, hero.y, color(216, 50, 38), 24);
           }
         }
@@ -495,8 +517,13 @@
         shake = max(0, shake - 1.0);
 
         background(0);
+        drawStageBackdrop();
         push();
-        translate(sx, sy);
+        translate(GAME_X + sx, sy);
+        drawingContext.save();
+        drawingContext.beginPath();
+        drawingContext.rect(0, 0, VIEW_W, VIEW_H);
+        drawingContext.clip();
         imageMode(CORNER);
         drawBackground();
         imageMode(CENTER);
@@ -505,6 +532,7 @@
         drawHero(active);
         drawParticles();
         drawMonsterCursor(active);
+        drawingContext.restore();
         pop();
 
         drawVignette(active);
@@ -552,7 +580,7 @@
           if (!monster.defeated) {
             const bob = sin(frameCount * 0.035 + monster.id) * 8;
             image(monsterImgs[monster.imgIndex], monster.x, y + bob, monster.w, monster.h);
-            drawEntityBar(monster.x - 68, y - monster.h * 0.55 - 20, 136, 9, monster.hp, monster.maxHp, color(216, 50, 38));
+            drawEntityBar(monster.x - 68, y - monster.h * 0.55 - 20, 136, 9, monster.hp, monster.maxHp, color(MONSTER_BAR_COLOR));
 
             if (monster.id === 2) {
               for (const clone of monster.clones) {
@@ -560,7 +588,7 @@
                 tint(195, 232, 168, alpha);
                 image(monsterImgs[1], clone.x, clone.y - cameraY + sin(frameCount * 0.07 + clone.phase) * 9, monster.w * 0.58, monster.h * 0.58);
                 noTint();
-                drawEntityBar(clone.x - 38, clone.y - cameraY - monster.h * 0.38, 76, 6, clone.life, 420, color(185, 220, 160), "");
+                drawEntityBar(clone.x - 38, clone.y - cameraY - monster.h * 0.38, 76, 6, clone.life, 420, color(155, 168, 126), "");
               }
             }
           }
@@ -618,65 +646,179 @@
         noFill();
         for (let i = 0; i < 18; i++) {
           stroke(0, 0, 0, i * 7);
-          rect(i, i, width - i * 2, height - i * 2);
+          rect(GAME_X + i, i, VIEW_W - i * 2, VIEW_H - i * 2);
         }
 
         if (active && active.id === 3 && millis() < active.parasiteUntil) {
           noStroke();
           fill(120, 0, 0, 80 + sin(frameCount * 0.16) * 35);
-          rect(0, 0, width, height);
+          rect(GAME_X, 0, VIEW_W, VIEW_H);
         }
       }
 
       function drawHud(active) {
-        noStroke();
-        fill(0, 0, 0, 120);
-        rect(14, 14, width - 28, 86, 8);
-        fill(255);
-        textSize(14);
-        textAlign(LEFT, TOP);
-        text(`主角  Lv.${hero.level}  DMG ${hero.damage}`, 28, 24);
-        drawEntityBar(28, 49, 194, 14, hero.hp, hero.maxHp, color(164, 207, 115), `${ceil(hero.hp)}/${hero.maxHp}`);
-
-        if (active) {
-          textAlign(RIGHT, TOP);
-          fill(255);
-          text(`${active.name}`, width - 28, 24);
-          drawEntityBar(width - 222, 49, 194, 14, active.hp, active.maxHp, color(216, 50, 38), `${ceil(active.hp)}/${active.maxHp}`);
-        }
-
-        fill(255, 230);
-        textSize(12);
-        textAlign(CENTER, TOP);
         const lock = max(0, ceil((hero.attackLockedUntil - millis()) / 1000));
-        const hint = lock > 0 ? `主角攻击冷却 ${lock}s` : "主角: 方向键沿隐藏路线攀登和转弯, 空格攻击    怪物: 五指握拳攻击";
-        text(hint, width / 2, 75);
+        drawTopBars(active);
+        drawMobileControls(lock, active);
+        drawCameraDebug(width - 176, 82);
 
         if (gameState === "intro") {
-          centerText("按方向键开始", "主角只能沿隐藏路线向上攀登");
+          drawIntroScene();
         } else if (gameState === "win") {
-          centerText("YOU WIN", "细菌抵达顶端");
+          drawEndScene("CORE VICTORY", "The Core has reached the upper city", color(205, 205, 149));
         } else if (gameState === "lose") {
-          centerText("GAME OVER", "按 R 重来");
+          drawEndScene("MONSTER VICTORY", "The Core sinks into the vertical passage", color(90, 30, 28));
         } else if (messageTimer > 0) {
           messageTimer--;
           const defeated = monsters.filter(m => m.defeated).length;
           if (defeated > 0 && defeated < 3) {
-            centerText(`进化完成  Lv.${hero.level}`, "伤害和生命上限提升");
+            centerText(`EVOLUTION COMPLETE  Lv.${hero.level}`, "Damage and max health increased");
           }
         }
-
-        drawCameraDebug();
       }
 
-      function drawCameraDebug() {
-        const previewW = 116;
-        const previewH = 86;
-        push();
-        translate(18, height - previewH - 18);
+      function drawStageBackdrop() {
         noStroke();
-        fill(0, 0, 0, 150);
-        rect(0, 0, previewW + 130, previewH, 8);
+        fill(8, 9, 9);
+        rect(0, 0, width, height);
+        fill(12, 14, 13);
+        rect(0, 0, GAME_X, height);
+        rect(GAME_X + VIEW_W, 0, GAME_X, height);
+        fill(0, 0, 0, 145);
+        rect(0, 0, width, height);
+        fill(255, 255, 255, 18);
+        rect(GAME_X - 1, 0, 1, height);
+        rect(GAME_X + VIEW_W, 0, 1, height);
+      }
+
+      function drawDpad(cx, cy) {
+        const active = keyIsDown(UP_ARROW) || keyIsDown(DOWN_ARROW) || keyIsDown(LEFT_ARROW) || keyIsDown(RIGHT_ARROW);
+        noStroke();
+        fill(0, 0, 0, 95);
+        circle(cx, cy, 154);
+        fill(active ? color(164, 207, 115, 230) : color(255, 255, 255, 38));
+        circle(cx, cy, 70);
+        stroke(255, 255, 255, 150);
+        strokeWeight(2);
+        noFill();
+        circle(cx, cy, 154);
+        noStroke();
+        drawArrowGlyph(cx, cy - 58, "↑", keyIsDown(UP_ARROW));
+        drawArrowGlyph(cx, cy + 58, "↓", keyIsDown(DOWN_ARROW));
+        drawArrowGlyph(cx - 58, cy, "←", keyIsDown(LEFT_ARROW));
+        drawArrowGlyph(cx + 58, cy, "→", keyIsDown(RIGHT_ARROW));
+      }
+
+      function drawArrowGlyph(x, y, label, active) {
+        fill(active ? color(25, 30, 22) : color(255, 255, 255, 210));
+        textSize(22);
+        textAlign(CENTER, CENTER);
+        text(label, x, y);
+      }
+
+      function drawTopBars(active) {
+        noStroke();
+        fill(0, 0, 0, 120);
+        rect(24, 18, 350, 54, 12);
+        rect(width - 374, 18, 350, 54, 12);
+        fill(255);
+        textSize(14);
+        textAlign(LEFT, TOP);
+        text(`CORE  Lv.${hero.level}  DMG ${hero.damage}`, 42, 25);
+        drawEntityBar(42, 48, 230, 12, hero.hp, hero.maxHp, color(HERO_BAR_COLOR), `${ceil(hero.hp)}/${hero.maxHp}`);
+        if (active) {
+          textAlign(RIGHT, TOP);
+          text(`${active.name}`, width - 42, 25);
+          drawEntityBar(width - 272, 48, 230, 12, active.hp, active.maxHp, color(MONSTER_BAR_COLOR), `${ceil(active.hp)}/${active.maxHp}`);
+        }
+      }
+
+      function drawMobileControls(lock, active) {
+        drawDpad(118, height - 112);
+        drawRoundButton(246, height - 92, 80, keyIsDown(32), lock > 0 ? `${lock}` : "ATK", "SPACE");
+        drawFistButton(width - 124, height - 104, active);
+
+        fill(255, 235);
+        textAlign(CENTER, CENTER);
+        textSize(12);
+        text("MOVE", 118, height - 16);
+        text(lock > 0 ? "COOLDOWN" : "CORE ATTACK", 246, height - 28);
+        text("FIST STRIKE", width - 124, height - 10);
+      }
+
+      function drawRoundButton(cx, cy, size, active, mainLabel, subLabel) {
+        noStroke();
+        fill(0, 0, 0, 105);
+        circle(cx, cy, size + 20);
+        fill(active ? color(164, 207, 115, 235) : color(255, 255, 255, 42));
+        circle(cx, cy, size);
+        stroke(255, 255, 255, 150);
+        strokeWeight(2);
+        noFill();
+        circle(cx, cy, size);
+        noStroke();
+        fill(active ? 24 : 255);
+        textAlign(CENTER, CENTER);
+        textSize(24);
+        text(mainLabel, cx, cy - 5);
+        textSize(10);
+        text(subLabel, cx, cy + 22);
+      }
+
+      function drawFistButton(cx, cy, active) {
+        const controls = getControls();
+        const isAttack = controls.monsterAttack && gameState === "play";
+        const iconColor = isAttack ? color(115, 50, 40) : color(94, 39, 35);
+
+        stroke(255, 255, 255, isAttack ? 210 : 150);
+        strokeWeight(2);
+        noFill();
+        circle(cx, cy, 116);
+        stroke(255, 255, 255, isAttack ? 100 : 65);
+        circle(cx, cy, 94);
+
+        push();
+        translate(cx - 8, cy - 6);
+        scale(0.78);
+        drawingContext.shadowColor = isAttack ? "rgba(115, 50, 40, 0.75)" : "rgba(0, 0, 0, 0.35)";
+        drawingContext.shadowBlur = isAttack ? 14 : 4;
+        noStroke();
+        fill(iconColor);
+        rect(-38, -30, 15, 46, 8);
+        rect(-16, -35, 16, 51, 8);
+        rect(7, -38, 17, 54, 8);
+        rect(32, -32, 15, 48, 8);
+        rect(-10, 19, 56, 18, 10);
+
+        fill(38, 19, 18, isAttack ? 92 : 76);
+        rect(-20, -26, 3, 37, 2);
+        rect(3, -30, 3, 41, 2);
+        rect(28, -26, 3, 37, 2);
+        rect(-5, 37, 46, 4, 3);
+        drawingContext.shadowBlur = 0;
+        pop();
+
+        if (isAttack) {
+          noFill();
+          stroke(255, 255, 255, 145 + sin(frameCount * 0.3) * 45);
+          strokeWeight(3);
+          circle(cx, cy, 130 + sin(frameCount * 0.2) * 8);
+        }
+
+        fill(255);
+        textSize(11);
+        textAlign(CENTER, CENTER);
+        text(controls.monsterGesture === "FIST" ? "STRIKING" : hands.length ? "OPEN HAND" : "NO HAND", cx, cy + 62);
+      }
+
+      function drawCameraDebug(x, y) {
+        const previewW = 148;
+        const previewH = 111;
+        push();
+        translate(x, y);
+        noStroke();
+        fill(0, 0, 0, 135);
+        rect(0, 0, previewW, previewH + 58, 12);
         if (video && video.loadedmetadata) {
           push();
           translate(previewW, 0);
@@ -688,30 +830,42 @@
         fill(255);
         textSize(11);
         textAlign(LEFT, TOP);
-        text(`Camera: ${cameraReady ? "ON" : "WAIT"}`, previewW + 10, 10);
-        text(`Model: ${modelReady ? "ON" : "WAIT"}`, previewW + 10, 27);
-        text(`Hands: ${hands.length}`, previewW + 10, 44);
-        if (cameraError) text(cameraError.slice(0, 18), previewW + 10, 61);
+        text(`Camera ${cameraReady ? "ON" : "WAIT"}   Hands ${hands.length}`, 12, previewH + 12);
+        fill(180);
+        text(`Model ${modelReady ? "ON" : "WAIT"}`, 12, previewH + 31);
+        if (cameraError) text(cameraError.slice(0, 20), 78, previewH + 31);
         pop();
       }
 
       function drawEntityBar(x, y, w, h, current, maxValue, col, label = "") {
         const ratio = constrain(current / maxValue, 0, 1);
+        const cap = max(3, h * 0.45);
         noStroke();
-        fill(0, 0, 0, 125);
-        rect(x - 5, y - 5, w + 10, h + 10, 7);
-        fill(24, 20, 18, 230);
-        rect(x, y, w, h, h / 2);
-        fill(255, 255, 255, 25);
-        rect(x + 2, y + 2, max(0, w - 4), max(1, h * 0.35), h / 2);
+        fill(0, 0, 0, 150);
+        rect(x - 7, y - 7, w + 14, h + 14, cap + 5);
+        fill(52, 46, 39, 240);
+        rect(x - 4, y - 4, w + 8, h + 8, cap + 3);
+        fill(13, 11, 10, 245);
+        rect(x, y, w, h, cap);
+        fill(255, 255, 255, 18);
+        rect(x + 2, y + 2, max(0, w - 4), max(1, h * 0.32), cap);
+        fill(0, 0, 0, 80);
+        rect(x + 2, y + h * 0.58, max(0, w - 4), max(1, h * 0.25), cap);
         fill(col);
-        rect(x, y, w * ratio, h, h / 2);
-        fill(255, 255, 255, 70);
-        rect(x + 2, y + 2, max(0, w * ratio - 4), max(1, h * 0.25), h / 2);
-        stroke(255, 210);
+        rect(x + 1, y + 1, max(0, w * ratio - 2), h - 2, cap);
+        fill(255, 255, 235, 68);
+        rect(x + 3, y + 3, max(0, w * ratio - 6), max(1, h * 0.28), cap);
+        stroke(255, 245, 215, 210);
         strokeWeight(1);
         noFill();
-        rect(x, y, w, h, h / 2);
+        rect(x - 4, y - 4, w + 8, h + 8, cap + 3);
+        stroke(95, 79, 64, 220);
+        rect(x, y, w, h, cap);
+        stroke(255, 245, 215, 70);
+        for (let i = 1; i < 6; i++) {
+          const tickX = x + (w / 6) * i;
+          line(tickX, y + 2, tickX, y + h - 2);
+        }
         stroke(0, 0, 0, 90);
         line(x + 1, y + h - 1, x + w - 1, y + h - 1);
         noStroke();
@@ -723,32 +877,162 @@
         }
       }
 
+      function drawEndScene(title, subtitle, themeColor) {
+        const t = (millis() - winStartedAt) / 1000;
+        const cx = GAME_X + VIEW_W / 2;
+        const cy = height * 0.46;
+        const pulse = 1 + sin(frameCount * 0.08) * 0.035;
+
+        noStroke();
+        fill(0, 0, 0, 165);
+        rect(GAME_X, 0, VIEW_W, height);
+
+        push();
+        translate(cx, cy);
+        rotate(sin(frameCount * 0.015) * 0.04);
+        for (let i = 0; i < 18; i++) {
+          const a = frameCount * 0.012 + i * TWO_PI / 18;
+          const r1 = 72;
+          const r2 = 176 + sin(frameCount * 0.04 + i) * 10;
+          stroke(red(themeColor), green(themeColor), blue(themeColor), 28);
+          strokeWeight(2);
+          line(cos(a) * r1, sin(a) * r1, cos(a) * r2, sin(a) * r2);
+        }
+        noStroke();
+        for (let r = 230; r > 50; r -= 24) {
+          fill(red(themeColor), green(themeColor), blue(themeColor), map(r, 230, 50, 10, 38));
+          circle(0, 0, r * pulse);
+        }
+        stroke(8, 6, 5, 210);
+        strokeWeight(5);
+        fill(red(themeColor), green(themeColor), blue(themeColor));
+        textAlign(CENTER, CENTER);
+        textStyle(BOLD);
+        textSize(48 + sin(frameCount * 0.06) * 2);
+        text(title, 0, -8);
+        noStroke();
+        textStyle(NORMAL);
+        fill(232, 226, 190);
+        textSize(16);
+        text(subtitle, 0, 48);
+        fill(255, 245, 215, 180);
+        textSize(13);
+        text("Press R to restart", 0, 80);
+        pop();
+
+        noStroke();
+        for (let i = 0; i < 28; i++) {
+          const a = i * 0.74 + frameCount * 0.018;
+          const y = (height - ((frameCount * 1.4 + i * 37) % height));
+          fill(red(themeColor), green(themeColor), blue(themeColor), 80 + sin(frameCount * 0.06 + i) * 50);
+          circle(GAME_X + VIEW_W / 2 + cos(a) * (130 + i % 5 * 26), y, 3 + (i % 4));
+        }
+      }
+
+      function drawIntroScene() {
+        const panelX = GAME_X + 46;
+        const panelY = 50;
+        const panelW = VIEW_W - 92;
+        const panelH = height - 86;
+        const pulse = 1 + sin(frameCount * 0.05) * 0.03;
+
+        noStroke();
+        fill(0, 0, 0, 178);
+        rect(GAME_X, 0, VIEW_W, height);
+
+        push();
+        translate(GAME_X + VIEW_W / 2, height / 2);
+        for (let r = 280; r > 80; r -= 28) {
+          fill(115, 50, 40, map(r, 280, 80, 8, 28));
+          circle(0, 0, r * pulse);
+        }
+        pop();
+
+        fill(13, 11, 10, 222);
+        rect(panelX, panelY, panelW, panelH, 14);
+        stroke(205, 205, 149, 185);
+        strokeWeight(1.4);
+        noFill();
+        rect(panelX + 4, panelY + 4, panelW - 8, panelH - 8, 11);
+        stroke(115, 50, 40, 180);
+        rect(panelX + 11, panelY + 11, panelW - 22, panelH - 22, 8);
+
+        noStroke();
+        fill(205, 205, 149);
+        textAlign(CENTER, TOP);
+        textStyle(BOLD);
+        textSize(26);
+        text("Beneath Eden", GAME_X + VIEW_W / 2, panelY + 26);
+        textStyle(NORMAL);
+        fill(226, 220, 190);
+        textSize(13);
+        text("The Vertical Sewer", GAME_X + VIEW_W / 2, panelY + 58);
+
+        textAlign(LEFT, TOP);
+        textSize(15);
+        textLeading(22);
+        fill(242, 237, 216);
+        let y = panelY + 94;
+        for (const line of INTRO_LINES) {
+          y = drawWrappedLine(line, panelX + 34, y, panelW - 68, 22);
+          y += 8;
+        }
+
+        fill(205, 205, 149, 210 + sin(frameCount * 0.08) * 35);
+        textAlign(CENTER, CENTER);
+        textSize(15);
+        text("Press Enter / Click to begin the climb", GAME_X + VIEW_W / 2, panelY + panelH - 36);
+      }
+
+      function drawWrappedLine(line, x, y, maxW, lineH) {
+        let row = "";
+        for (const char of line) {
+          const test = row + char;
+          if (textWidth(test) > maxW && row) {
+            text(row, x, y);
+            row = char;
+            y += lineH;
+          } else {
+            row = test;
+          }
+        }
+        if (row) {
+          text(row, x, y);
+          y += lineH;
+        }
+        return y;
+      }
+
       function centerText(title, subtitle) {
         fill(0, 0, 0, 150);
-        rect(0, height * 0.39, width, 122);
+        rect(GAME_X, height * 0.39, VIEW_W, 122);
         textAlign(CENTER, CENTER);
         fill(255);
         textSize(42);
         textStyle(BOLD);
-        text(title, width / 2, height * 0.45);
+        text(title, GAME_X + VIEW_W / 2, height * 0.45);
         textStyle(NORMAL);
         fill(230);
         textSize(15);
-        text(subtitle, width / 2, height * 0.51);
+        text(subtitle, GAME_X + VIEW_W / 2, height * 0.51);
       }
 
       function getActiveMonster() {
         return monsters.find(monster => !monster.defeated);
       }
 
-      function designY(y) {
-        return y * Y_SCALE;
+      function sourceX(x) {
+        return BG_X + (x / SOURCE_W) * BG_W;
+      }
+
+      function sourceY(y) {
+        return (y / SOURCE_H) * WORLD_H;
       }
 
       function setupRoute() {
         route = ROUTE_POINTS.map(([x, y]) => ({
-          x: BG_X + x * BG_SCALE,
-          y: designY(y),
+          x: sourceX(x),
+          y: sourceY(y),
           d: 0
         }));
 
@@ -894,7 +1178,26 @@
       }
 
       function keyPressed() {
+        if (gameState === "intro" && (keyCode === ENTER || key === " ")) {
+          startGame();
+          return;
+        }
+        if (gameState === "play" && key === " ") {
+          shoot(getActiveMonster());
+          return;
+        }
         if (key === "r" || key === "R") resetGame();
+      }
+
+      function mousePressed() {
+        if (gameState === "intro") startGame();
+      }
+
+      function startGame() {
+        gameState = "play";
+        monsters[0].lastBlastAt = millis();
+        lastCloneAt = millis();
+        document.getElementById("loading").style.display = "none";
       }
 
       function resetGame() {
@@ -919,7 +1222,10 @@
           if (monster.clones) monster.clones = [];
           monster.parasiteUntil = 0;
         }
-        gameState = "play";
+        gameState = "intro";
+        winStartedAt = 0;
+        document.getElementById("loading").style.display = "block";
+        document.getElementById("loading").textContent = "Press Enter to begin";
       }
 
       function gotHands(results) {
